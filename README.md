@@ -35,17 +35,19 @@ source activate pvs
 `pvs` assumes that the T2-Weighted scans you are trying to generate PolyVoxel Scores for are already registered to MNI space. To check this you can run the following:
 
 ```
-python pvs --check_reg INPUT_SCAN.nii --out out_reg_check.pdf
+python pvs --check_reg INPUT_SCAN.nii --out out_reg_check.jpg
 ```
 
 Replacing `INPUT_SCAN.nii` with your input T2-Weighted scan. This should generate a file that looks like this:
 
-![alt text](https://github.com/robloughnan/pvs/blob/main/mni152_reg_check.pdf?raw=true)
+![alt text](https://github.com/robloughnan/pvs/blob/main/mni152_reg_check.jpg?raw=true)
 
 This should enable you to verify that the weights are aligned with your image (i.e. peaks in the basal ganglia and cerebellum)
 
 
 ## Generate PolyVoxel Score
+
+** Not implimented yet **
 
 Using the option `--nii_files` you can pass the filepath to a text file containing a list of NIFTI files which you would like to generate PolyVoxel Scores for. An example of the contents of this file (named `nifti_files.txt`):
 ```
