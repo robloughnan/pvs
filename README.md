@@ -40,7 +40,7 @@ python pvs --check_reg INPUT_SCAN.nii --out out_reg_check.pdf
 
 Replacing `INPUT_SCAN.nii` with your input T2-Weighted scan. This should generate a file that looks like this:
 
-![alt text](https://robloughnan/pvs/blob/main/mni152_reg_check.pdf?raw=true)
+![alt text](https://github.com/robloughnan/pvs/blob/main/mni152_reg_check.pdf?raw=true)
 
 This should enable you to verify that the weights are aligned with your image (i.e. peaks in the basal ganglia and cerebellum)
 
