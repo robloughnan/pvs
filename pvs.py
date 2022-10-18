@@ -107,5 +107,6 @@ if __name__ == "__main__":
     if not opt.check_reg is None:
         check_reg(opt.check_reg, opt.out)
     elif not opt.nii_files is None:
-        compute_pvs(opt.nii_files, opt.out)
+        raise NotImplementedError('Computation of PVS not yet developed')
+        # compute_pvs(opt.nii_files, opt.out)
     
