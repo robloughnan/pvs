@@ -5,6 +5,17 @@ import numpy as np
 import os
 import argparse
 import pandas as pd
+import warnings
+import time
+from sklearn.preprocessing import QuantileTransformer
+
+## To do:
+# include log
+# include documentation
+# remove unneccesary files for github
+# Add to github
+# Add summary staitics
+# Read papers
 
 def read_nii(nii_file, stats):
     ## NEED TO DOCUMENT HERE
@@ -22,9 +33,15 @@ def read_nii(nii_file, stats):
     
     return nii_img
 
-def read_and_mask(nifti_file, mask):
+def read_and_mask(nifti_file, weights, mask):
     ## NEED TO DOCUMENT HERE
-    pass
+    try:
+        nii_img = read_nii(nifti_file, weights)
+        return nii_img.get_fdata()[mask]
+    except:
+        warnings.warn(f'Error parsing {nifti_file}, filling with NA')
+        numb_el = mask.sum().sum().sum()
+        return np.full((numb_el, ), np.nan)
     
 
 def check_reg(nii_file, out):
@@ -36,7 +53,8 @@ def check_reg(nii_file, out):
         raise ValueError('Please pass NIFTI filepath')
 
     # Read in association statistics
-    tstats = nib.load('./t_stats.nii')
+    tstat_file = os.path.join(os.path.dirname(__file__), 'tstats.nii')
+    tstats = nib.load(tstat_file)
     tstats_data = tstats.get_fdata()
     ind = abs(tstats_data[:, :, :].T)<3.5
     tstats_data.T[ind] = np.nan
@@ -72,27 +90,55 @@ def check_reg(nii_file, out):
     plt.tight_layout()
     plt.savefig(out)
 
-def compute_pvs(nii_files, out):
+def compute_pvs(nii_filepaths, out):
     ## NEED TO DOCUMENT HERE
 
     # Read in text files
-    nii_files = pd.read_csv(nii_files, header=None).iloc[:, 0]
+    nii_files = pd.read_csv(nii_filepaths, header=None).iloc[:, 0]
+    n_files = len(nii_files)
+    print(f'Read {n_files} from {nii_filepaths}')
 
-    # Read in tstats in case scans need reslicing
-    tstats = nib.load('./t_stats.nii')
-    # Generate mask of most significant voxels
-
+    # Read in weights and generate mask
+    print('Loading weights file')
+    weight_file = os.path.join(os.path.dirname(__file__), 'weights.nii')
+    weights = nib.load(weight_file)
+    weights_data = weights.get_fdata()
+    mask = (weights_data[:, :, :] != 0)
+    wvec = weights_data[mask]
+    
     # Read in nifti files (applying mask)
-    masked_images = nii_files.apply(lambda x: read_and_mask(x, mask))
-
+    print('Reading and masking images')
+    masked_images = nii_files.apply(lambda x: read_and_mask(x, weights, mask))
+    masked_images = np.stack(masked_images.values)
+    
     # Generate PolyVoxel Score
-    pvs = masked_images * weights
-    pvs = pd.DataFrame({'Scan': nii_files.tolist(), 'PVS': pvs})
+    print('Computing Polyvoxel Score')
+    pvs = np.matmul(masked_images, wvec)
+    
+    # Identify Outliers
+    if len(pvs)>50:
+        pvs = pd.Series(pvs)
+        q1 = pvs.quantile(0.25)
+        q3 = pvs.quantile(0.75)
+        IQR=q3-q1
+        outliers = ((pvs<(q1-1.5*IQR)) | (pvs>(q3+1.5*IQR)))
+        pvs = pvs.values
+        if sum(outliers)>0:
+            outlier_files = nii_files[outliers].tolist()
+            outlier_file_str = '\n\t'.join(outlier_files)
+            warnings.warn(f'{sum(outliers)} outliers detected:\n\t{outlier_file_str}\n suggest running --check_reg on these files')
+    else:
+        outliers = np.full((n_files, ), False)
+    qt = QuantileTransformer(output_distribution='normal')
+    pvs_QT = np.full((n_files, ), np.nan)
+    pvs_QT[~outliers] = qt.fit_transform(pvs[~outliers, np.newaxis]).squeeze()
+    pvs = pd.DataFrame({'Scan': nii_files.tolist(), 'PVS': pvs, 'PVS_QT': pvs_QT})
 
     # Save out results
     if out is None:
         out = './pvs.tsv'
-    pvs.to_csv(out, sep='\t')
+    print(f'Saving PVS to {out}')
+    pvs.to_csv(out, sep='\t', index=False, na_rep='NA')
     
 
 if __name__ == "__main__":
@@ -101,12 +147,10 @@ if __name__ == "__main__":
     parser.add_argument('--nii_files', help='Pass path to text file containing filepaths to .nii files registered to MNI space', type=str, default=None)
     parser.add_argument('--out', help='Path to output', type=str, default=None)
 
-
     opt = parser.parse_args()
 
     if not opt.check_reg is None:
         check_reg(opt.check_reg, opt.out)
     elif not opt.nii_files is None:
-        raise NotImplementedError('Computation of PVS not yet developed')
-        # compute_pvs(opt.nii_files, opt.out)
+        compute_pvs(opt.nii_files, opt.out)
     
