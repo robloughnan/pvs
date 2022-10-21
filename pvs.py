@@ -5,22 +5,66 @@ import numpy as np
 import os
 import argparse
 import pandas as pd
-import warnings
-import time
 from sklearn.preprocessing import QuantileTransformer
+import logging
+from tqdm import tqdm
 
 ## To do:
-# include log
 # include documentation
 # remove unneccesary files for github
 # Add to github
 # Add summary staitics
 # Read papers
 
-def read_nii(nii_file, stats):
-    ## NEED TO DOCUMENT HERE
-    # Read in user defined file 
-    print(f'Reading in {nii_file}')
+def create_logger(log):
+    """
+    Creates a logger that logs to both a file and the console 
+    Parameters
+    ----------
+        log: str 
+            a file path to log to 
+    Returns
+    -------
+        Logger
+            the logger object
+    """
+    # Create logger
+    logger = logging.getLogger('pvs')
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler(log, mode='w')
+    fh.setLevel(logging.DEBUG)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    return(logger)
+
+def read_nii(nii_file, stats, verbose):
+    """
+    Reads in NIFTI file and resclices according to stats
+    Parameters
+    ----------
+        nii_file: str 
+            file path to nifti file to be read in
+        stats: Nifti1Image
+            nifti image defining how voxels should be resliced
+        verbose: bool
+            flag to determine if each file being read in is logged
+    Returns
+    -------
+        img: Nifti1Image
+            the image that is read in (and rescliced if necessary)
+    """
+    # logger = logging.getLogger('pvs')
+    if verbose:
+        logger.info(f'Reading in {nii_file}')
     nii_img = nib.load(nii_file)
 
     # Check images have the same dimensions
@@ -28,27 +72,55 @@ def read_nii(nii_file, stats):
         return None
 
     if nii_img.shape != stats.shape:
-        print(f'Resampling {nii_file} (shape: {nii_img.shape}) to match assocation stats (shape: {stats.shape})')
+        if verbose:
+            logger.info(f'Resampling {nii_file} (shape: {nii_img.shape}) to match assocation stats (shape: {stats.shape})')
         nii_img = processing.resample_from_to(nii_img, stats)
     
     return nii_img
 
-def read_and_mask(nifti_file, weights, mask):
-    ## NEED TO DOCUMENT HERE
+def read_and_mask(nifti_file, weights, mask, verbose):
+    """
+    Reads in NIFTI file and resclices according to weights and applys mask 
+    Parameters
+    ----------
+        nii_file: str 
+            file path to nifti file to be read in
+        weights: Nifti1Image
+            nifti image defining how voxels should be resliced
+        mask: np.array
+            a boolean array indicating which voxels to be masked
+        verbose: bool
+            flag to determine if each file being read in is logged
+    Returns
+    -------
+        np.array
+            one dimensional array of read in image masked
+    """
+    # logger = logging.getLogger('pvs')
     try:
-        nii_img = read_nii(nifti_file, weights)
+        nii_img = read_nii(nifti_file, weights, verbose)
         return nii_img.get_fdata()[mask]
     except:
-        warnings.warn(f'Error parsing {nifti_file}, filling with NA')
+        logger.warning(f'Error parsing {nifti_file}, filling with NA')
         numb_el = mask.sum().sum().sum()
         return np.full((numb_el, ), np.nan)
     
 
 def check_reg(nii_file, out):
-    ### Function reads in nii file and plots out to file overlaying PVS to check alignment
-    # nii_file: (str) path to nii_file to generate overlay on top of
-    # out: (str) path to output for generated file, if None then will output to same directory as nii_file
+    """
+    Function reads in nii_file and plots out to file overlaying PVS (unregularized) weights to check alignment
+    Parameters
+    ----------
+        nii_file: str 
+            file path to nifti file to check regisration of
+        out: str
+            path to output for generated file, if None then will output to same directory as nii_file
+    Returns
+    -------
+        None
+    """
 
+    # logger = logging.getLogger('pvs')
     if nii_file.endswith('.nii') and  nii_file.endswith('.nii.gz'):
         raise ValueError('Please pass NIFTI filepath')
 
@@ -60,14 +132,14 @@ def check_reg(nii_file, out):
     tstats_data.T[ind] = np.nan
 
     # Extract image
-    nii_img = read_nii(nii_file, tstats)
+    nii_img = read_nii(nii_file, tstats, verbose=True)
     if nii_img is None:
         raise ValueError(f'{nii_file} is not 3d image')
 
     nii_img_data = nii_img.get_fdata()
 
     # Generate plot
-    print('Generating plot and overlay')
+    logger.info('Generating plot and overlay')
     alpha = 0.8
     cm_stats = 'jet'
 
@@ -80,26 +152,35 @@ def check_reg(nii_file, out):
         axes[i, j].imshow(tstats_data[:, :, axial_slc].T, cmap=cm_stats, origin="lower", alpha=alpha)
         axes[i, j].set_xticks([])
         axes[i, j].set_yticks([])
-
-    # If out is not defined then use nii_file path
-    if out is None:
-        out_parts = os.path.split(nii_file)
-        out = os.path.join(out_parts[0], out_parts[1].split('.')[0] + '_reg_check.pdf')
-        print(f'No user defined output, saving to {out}')
     
+    logger.info(f'Saving to out')
     plt.tight_layout()
     plt.savefig(out)
 
-def compute_pvs(nii_filepaths, out):
-    ## NEED TO DOCUMENT HERE
+def compute_pvs(nii_filepaths, out, verbose):
+    """
+    Function reads in files from nii_filepaths and computes PolyVoxel Score
+    Parameters
+    ----------
+        nii_filepaths: str 
+            path to text file containing list of nifti files to compute polyvoxel score for
+        out: str
+            path to output PVS to
+        verbose: bool  
+            if True will print out each file being read in
+    Returns
+    -------
+        None
+    """
 
+    # logger = logging.getLogger('pvs')
     # Read in text files
     nii_files = pd.read_csv(nii_filepaths, header=None).iloc[:, 0]
     n_files = len(nii_files)
-    print(f'Read {n_files} from {nii_filepaths}')
+    logger.info(f'Read {n_files} from {nii_filepaths}')
 
     # Read in weights and generate mask
-    print('Loading weights file')
+    logger.info('Loading weights file')
     weight_file = os.path.join(os.path.dirname(__file__), 'weights.nii')
     weights = nib.load(weight_file)
     weights_data = weights.get_fdata()
@@ -107,12 +188,13 @@ def compute_pvs(nii_filepaths, out):
     wvec = weights_data[mask]
     
     # Read in nifti files (applying mask)
-    print('Reading and masking images')
-    masked_images = nii_files.apply(lambda x: read_and_mask(x, weights, mask))
+    logger.info('Reading and masking images')
+    tqdm.pandas() # enable progress bar
+    masked_images = nii_files.progress_apply(lambda x: read_and_mask(x, weights, mask, verbose))
     masked_images = np.stack(masked_images.values)
     
     # Generate PolyVoxel Score
-    print('Computing Polyvoxel Score')
+    logger.info('Computing Polyvoxel Score')
     pvs = np.matmul(masked_images, wvec)
     
     # Identify Outliers
@@ -126,18 +208,15 @@ def compute_pvs(nii_filepaths, out):
         if sum(outliers)>0:
             outlier_files = nii_files[outliers].tolist()
             outlier_file_str = '\n\t'.join(outlier_files)
-            warnings.warn(f'{sum(outliers)} outliers detected:\n\t{outlier_file_str}\n suggest running --check_reg on these files')
+            logger.warning(f'{sum(outliers)} outliers detected:\n\t{outlier_file_str}\n suggest running --check_reg on these files')
     else:
         outliers = np.full((n_files, ), False)
-    qt = QuantileTransformer(output_distribution='normal')
+    qt = QuantileTransformer(output_distribution='normal', n_quantiles=min([sum(~outliers), 1000]))
     pvs_QT = np.full((n_files, ), np.nan)
     pvs_QT[~outliers] = qt.fit_transform(pvs[~outliers, np.newaxis]).squeeze()
     pvs = pd.DataFrame({'Scan': nii_files.tolist(), 'PVS': pvs, 'PVS_QT': pvs_QT})
 
-    # Save out results
-    if out is None:
-        out = './pvs.tsv'
-    print(f'Saving PVS to {out}')
+    logger.info(f'Saving PVS to {out}')
     pvs.to_csv(out, sep='\t', index=False, na_rep='NA')
     
 
@@ -145,12 +224,39 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Command line tool generates a PolyVoxel Score (PVS) of the "Hemochromatosis Brain" using T2-Weighted NIFTI scans')
     parser.add_argument('--check_reg', help='Pass .nii file to check if it is registered with weights and MNI space before computing PVS', type=str, default=None)
     parser.add_argument('--nii_files', help='Pass path to text file containing filepaths to .nii files registered to MNI space', type=str, default=None)
+    parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--out', help='Path to output', type=str, default=None)
 
     opt = parser.parse_args()
-
+    
+    if not opt.check_reg is None and not opt.nii_files is None:
+        raise ValueError('Cannot select both --check_reg and --nii_files')
+    
+    # If out is not defined then use nii_file path
+    if opt.out is None and not opt.check_reg is None:
+        out_parts = os.path.split(opt.check_reg)
+        log = os.path.join(out_parts[0], out_parts[1].split('.')[0] + 'pvs.reg_check.log')
+        out = log.replace('.log', '.pdf')
+        print(f'No user defined output, logging to to {log}')
+    if opt.out is None and not opt.nii_files is None:
+        log = './pvs.log'
+        print(f'No user defined output, logging to to {log}')
+        out = log.replace('.log', '.out')
+    else:
+        out = opt.out
+        log = os.path.splitext(opt.out)[0] + '.log'
+    
+    global logger 
+    logger = create_logger(log)
+    
+    # Log Arguments
+    logger.info(f'{__file__} Starting')
+    for arg, value in sorted(vars(opt).items()):
+        logger.info("Argument --%s: %r", arg, value)
+        
+        
     if not opt.check_reg is None:
         check_reg(opt.check_reg, opt.out)
     elif not opt.nii_files is None:
-        compute_pvs(opt.nii_files, opt.out)
-    
+        compute_pvs(opt.nii_files, opt.out, opt.verbose)
+    logger.info('Finished')
