@@ -9,13 +9,6 @@ from sklearn.preprocessing import QuantileTransformer
 import logging
 from tqdm import tqdm
 
-## To do:
-# include documentation
-# remove unneccesary files for github
-# Add to github
-# Add summary staitics
-# Read papers
-
 def create_logger(log):
     """
     Creates a logger that logs to both a file and the console 
@@ -29,7 +22,6 @@ def create_logger(log):
             the logger object
     """
     # Create logger
-    logger = logging.getLogger('pvs')
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
     fh = logging.FileHandler(log, mode='w')
@@ -62,7 +54,6 @@ def read_nii(nii_file, stats, verbose):
         img: Nifti1Image
             the image that is read in (and rescliced if necessary)
     """
-    # logger = logging.getLogger('pvs')
     if verbose:
         logger.info(f'Reading in {nii_file}')
     nii_img = nib.load(nii_file)
@@ -96,7 +87,6 @@ def read_and_mask(nifti_file, weights, mask, verbose):
         np.array
             one dimensional array of read in image masked
     """
-    # logger = logging.getLogger('pvs')
     try:
         nii_img = read_nii(nifti_file, weights, verbose)
         return nii_img.get_fdata()[mask]
@@ -120,7 +110,6 @@ def check_reg(nii_file, out):
         None
     """
 
-    # logger = logging.getLogger('pvs')
     if nii_file.endswith('.nii') and  nii_file.endswith('.nii.gz'):
         raise ValueError('Please pass NIFTI filepath')
 
@@ -173,7 +162,6 @@ def compute_pvs(nii_filepaths, out, verbose):
         None
     """
 
-    # logger = logging.getLogger('pvs')
     # Read in text files
     nii_files = pd.read_csv(nii_filepaths, header=None).iloc[:, 0]
     n_files = len(nii_files)
