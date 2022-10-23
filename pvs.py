@@ -22,6 +22,7 @@ def create_logger(log):
             the logger object
     """
     # Create logger
+    logger = logging.getLogger('pvs')
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
     fh = logging.FileHandler(log, mode='w')
@@ -220,16 +221,19 @@ if __name__ == "__main__":
     if not opt.check_reg is None and not opt.nii_files is None:
         raise ValueError('Cannot select both --check_reg and --nii_files')
     
+    if opt.check_reg is None and opt.nii_files is None:
+        raise ValueError('Must select either --check_reg or --nii_files')
+    
     # If out is not defined then use nii_file path
     if opt.out is None and not opt.check_reg is None:
         out_parts = os.path.split(opt.check_reg)
         log = os.path.join(out_parts[0], out_parts[1].split('.')[0] + 'pvs.reg_check.log')
-        out = log.replace('.log', '.pdf')
+        out = log.replace('.log', '.jpg')
         print(f'No user defined output, logging to to {log}')
     if opt.out is None and not opt.nii_files is None:
         log = './pvs.log'
         print(f'No user defined output, logging to to {log}')
-        out = log.replace('.log', '.out')
+        out = log.replace('.log', '.tsv')
     else:
         out = opt.out
         log = os.path.splitext(opt.out)[0] + '.log'
@@ -244,7 +248,7 @@ if __name__ == "__main__":
         
         
     if not opt.check_reg is None:
-        check_reg(opt.check_reg, opt.out)
+        check_reg(opt.check_reg, out)
     elif not opt.nii_files is None:
-        compute_pvs(opt.nii_files, opt.out, opt.verbose)
+        compute_pvs(opt.nii_files, out, opt.verbose)
     logger.info('Finished')
