@@ -46,9 +46,6 @@ This should enable you to verify that the weights are aligned with your image (i
 
 
 ## Generate PolyVoxel Score
-
-** Not implimented yet **
-
 Using the option `--nii_files` you can pass the filepath to a text file containing a list of NIFTI files which you would like to generate PolyVoxel Scores for. An example of the contents of this file (named `nifti_files.txt`):
 ```
 /path/to/scan_1.nii
