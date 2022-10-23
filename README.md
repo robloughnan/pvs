@@ -14,7 +14,7 @@ git clone https://github.com/robloughnan/pvs.git
 cd pvs
 ```
 
-To install dependancies (`nibabel`, `matplotlib` and `numpy`) you can use `conda` package manager availible [here.](https://store.continuum.io/cshop/anaconda/)
+To install dependancies (`nibabel`, `pandas`, `sklearn`, `tqdm`, `matplotlib` and `numpy`) you can use `conda` package manager availible [here.](https://store.continuum.io/cshop/anaconda/)
 
 Once conda installed you can create a new environement with pvs dependencies.
 
@@ -63,14 +63,14 @@ You can then generate PVS's for each of these scans using:
 python pvs --nii_files nifti_files.txt --out PVS_out.tsv
 ```
 ```
-Image                   PVS
-/path/to/scan_1.nii     1.52
-/path/to/scan_2.nii     -1.32
-/path/to/scan_3.nii     3.6
-/path/to/scan_4.nii     -0.2
+Scan    PVS     PVS_QT
+/path/to/scan1.nii        -26330944.293608118     1.1448100220071562
+/path/to/scan2.nii        -24528804.382988364     1.883403395079479
+/path/to/scan3.nii        -25013190.256748438     1.6765107907543326
+/path/to/scan4.nii        -30374732.59083167      NA
 ...
 ```
-
+The `PVS` column is the raw calculated PolyVoxel Score, this is generated for every file which can successfully be read in. The `PVS_QT` column is the quantile transformed PVS, here transformed to a normal distribution. Outliers are given `NA` values in this column: this could indicate that these scans are poorly registered (you may want to check their alignment with `--check_reg`). Outilers are those that are 1.5 x IQR (interquartile range) outside of the 25th and 75th percentiles.
 ## Citation
 
 If you use this software please cite:
