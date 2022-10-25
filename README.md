@@ -1,9 +1,9 @@
 # Introduction
 This lightweight tool can be used to generate a PolyVoxel Score across a set of MNI registered T2-Weighted scans capturing the iron deposition seen in the architypal "Hemochromatosis Brain". This pattern of brain iron desposition may relevant for Parkinson's Disease risk. Two papers discussing details can be found here:
 
-[Loughnan, R., et al. Association of Genetic Variant Linked to Hemochromatosis With Brain Magnetic Resonance Imaging Measures of Iron and Movement Disorders. JAMA Neurology, 2015.](https://jamanetwork.com/journals/jamaneurology/fullarticle/2794928) 
+[Loughnan, R., et al. Association of Genetic Variant Linked to Hemochromatosis With Brain Magnetic Resonance Imaging Measures of Iron and Movement Disorders. JAMA Neurology, 2022.](https://jamanetwork.com/journals/jamaneurology/fullarticle/2794928) 
 
-[BIORXIV](https://jamanetwork.com/journals/jamaneurology/fullarticle/2794928) 
+[Loughnan, R., et al. Polygenic architecture of a novel MRI endophenotype: the ″Hemochromatosis Brain″. MedRxiv, 2022](https://www.medrxiv.org/content/10.1101/2022.10.22.22281386v1) 
 
 # Getting Started
 
@@ -72,8 +72,8 @@ The `PVS` column is the raw calculated PolyVoxel Score, this is generated for ev
 
 If you use this software please cite:
 
-[Loughnan, R., et al. Association of Genetic Variant Linked to Hemochromatosis With Brain Magnetic Resonance Imaging Measures of Iron and Movement Disorders. JAMA Neurology, 2015.](https://jamanetwork.com/journals/jamaneurology/fullarticle/2794928) 
+[Loughnan, R., et al. Association of Genetic Variant Linked to Hemochromatosis With Brain Magnetic Resonance Imaging Measures of Iron and Movement Disorders. JAMA Neurology, 2021](https://jamanetwork.com/journals/jamaneurology/fullarticle/2794928) 
 
 and 
 
-[BIORXIV](https://jamanetwork.com/journals/jamaneurology/fullarticle/2794928) 
+[Loughnan, R., et al. Polygenic architecture of a novel MRI endophenotype: the ″Hemochromatosis Brain″. MedRxiv, 2022](https://www.medrxiv.org/content/10.1101/2022.10.22.22281386v1) 
