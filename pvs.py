@@ -97,13 +97,15 @@ def read_and_mask(nifti_file, weights, mask, verbose):
         return np.full((numb_el, ), np.nan)
     
 
-def check_reg(nii_file, out):
+def check_reg(nii_file, modality, out):
     """
     Function reads in nii_file and plots out to file overlaying PVS (unregularized) weights to check alignment
     Parameters
     ----------
         nii_file: str 
             file path to nifti file to check regisration of
+        modality: str
+            modality to use for weights, can be t2 or t2star
         out: str
             path to output for generated file, if None then will output to same directory as nii_file
     Returns
@@ -115,7 +117,7 @@ def check_reg(nii_file, out):
         raise ValueError('Please pass NIFTI filepath')
 
     # Read in association statistics
-    tstat_file = os.path.join(os.path.dirname(__file__), 'tstats.nii')
+    tstat_file = os.path.join(os.path.dirname(__file__), 'tstats_' + modality + '.nii')
     tstats = nib.load(tstat_file)
     tstats_data = tstats.get_fdata()
     ind = abs(tstats_data[:, :, :].T)<3.5
@@ -147,13 +149,15 @@ def check_reg(nii_file, out):
     plt.tight_layout()
     plt.savefig(out)
 
-def compute_pvs(nii_filepaths, out, verbose):
+def compute_pvs(nii_filepaths, modality, out, verbose):
     """
     Function reads in files from nii_filepaths and computes PolyVoxel Score
     Parameters
     ----------
         nii_filepaths: str 
             path to text file containing list of nifti files to compute polyvoxel score for
+        modality: str
+            modality to use for weights, can be t2 or t2star
         out: str
             path to output PVS to
         verbose: bool  
@@ -170,7 +174,7 @@ def compute_pvs(nii_filepaths, out, verbose):
 
     # Read in weights and generate mask
     logger.info('Loading weights file')
-    weight_file = os.path.join(os.path.dirname(__file__), 'weights.nii')
+    weight_file = os.path.join(os.path.dirname(__file__), 'weights_' + modality + '.nii')
     weights = nib.load(weight_file)
     weights_data = weights.get_fdata()
     mask = (weights_data[:, :, :] != 0)
@@ -213,11 +217,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Command line tool generates a PolyVoxel Score (PVS) of the "Hemochromatosis Brain" using T2-Weighted NIFTI scans')
     parser.add_argument('--check_reg', help='Pass .nii file to check if it is registered with weights and MNI space before computing PVS', type=str, default=None)
     parser.add_argument('--nii_files', help='Pass path to text file containing filepaths to .nii files registered to MNI space', type=str, default=None)
+    parser.add_argument('--modality', help='Modality to use weights from can be t2 or t2star [t2]', type=str, default='t2')
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--out', help='Path to output', type=str, default=None)
 
     opt = parser.parse_args()
     
+    if not opt.modality in ['t2', 't2star']:
+        raise ValueError('modality must be either t2 or t2star')
+
     if not opt.check_reg is None and not opt.nii_files is None:
         raise ValueError('Cannot select both --check_reg and --nii_files')
     
@@ -248,7 +256,7 @@ if __name__ == "__main__":
         
         
     if not opt.check_reg is None:
-        check_reg(opt.check_reg, out)
+        check_reg(opt.check_reg, opt.modality, out)
     elif not opt.nii_files is None:
-        compute_pvs(opt.nii_files, out, opt.verbose)
+        compute_pvs(opt.nii_files, opt.modality, out, opt.verbose)
     logger.info('Finished')

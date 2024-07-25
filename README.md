@@ -1,5 +1,5 @@
 # Introduction
-This lightweight tool can be used to generate a PolyVoxel Score across a set of MNI registered T2-Weighted scans capturing the iron deposition seen in the architypal "Hemochromatosis Brain". This pattern of brain iron desposition may relevant for Parkinson's Disease risk. Two papers discussing details can be found here:
+This lightweight tool can be used to generate a PolyVoxel Score across a set of MNI registered T2-Weighted or T2* scans capturing the iron deposition seen in the architypal "Hemochromatosis Brain". This pattern of brain iron desposition may relevant for Parkinson's Disease risk. Two papers discussing details can be found here:
 
 [Loughnan, R., et al. Association of Genetic Variant Linked to Hemochromatosis With Brain Magnetic Resonance Imaging Measures of Iron and Movement Disorders. JAMA Neurology, 2022.](https://jamanetwork.com/journals/jamaneurology/fullarticle/2794928) 
 
@@ -32,13 +32,13 @@ source activate pvs
 
 ## Check Registration
 
-`pvs` assumes that the T2-Weighted scans you are trying to generate PolyVoxel Scores for are already registered to MNI space. To check this you can run the following:
+`pvs` assumes that the T2-Weighted (or T2*) scans you are trying to generate PolyVoxel Scores for are already registered to MNI space. To check this you can run the following:
 
 ```
 python pvs --check_reg INPUT_SCAN.nii --out out_reg_check.jpg
 ```
 
-Replacing `INPUT_SCAN.nii` with your input T2-Weighted scan. This should generate a file that looks like this:
+Replacing `INPUT_SCAN.nii` with your input T2-Weighted or T2* scan. This should generate a file that looks like this:
 
 ![alt text](https://github.com/robloughnan/pvs/blob/main/mni152_reg_check.jpg?raw=true)
 
@@ -57,7 +57,7 @@ Using the option `--nii_files` you can pass the filepath to a text file containi
 
 You can then generate PVS's for each of these scans using:
 ```
-python pvs --nii_files nifti_files.txt --out PVS_out.tsv
+python pvs --nii_files nifti_files.txt --modality t2 --out PVS_out.tsv
 ```
 ```
 Scan    PVS     PVS_QT
