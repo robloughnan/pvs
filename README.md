@@ -57,7 +57,7 @@ Using the option `--nii_files` you can pass the filepath to a text file containi
 
 You can then generate PVS's for each of these scans using:
 ```
-python pvs --nii_files nifti_files.txt --modality t2 --out PVS_out.tsv
+python ./pvs --nii_files nifti_files.txt --modality t2 --out PVS_out.tsv
 ```
 ```
 Scan    PVS     PVS_QT
@@ -76,4 +76,4 @@ If you use this software please cite:
 
 and 
 
-[Loughnan, R., et al. Polygenic architecture of a novel MRI endophenotype: the ″Hemochromatosis Brain″. MedRxiv, 2022](https://www.medrxiv.org/content/10.1101/2022.10.22.22281386v1) 
+[Loughnan, R., et al. Hemochromatosis neural archetype reveals iron disruption in motor circuits″. Science Advances, 2024](https://www.science.org/doi/10.1126/sciadv.adp4431) 
