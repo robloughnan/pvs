@@ -35,7 +35,7 @@ source activate pvs
 `pvs` assumes that the T2-Weighted (or T2*) scans you are trying to generate PolyVoxel Scores for are already registered to MNI space. To check this you can run the following:
 
 ```
-python pvs --check_reg INPUT_SCAN.nii --out out_reg_check.jpg
+python ./pvs --check_reg INPUT_SCAN.nii --out out_reg_check.jpg
 ```
 
 Replacing `INPUT_SCAN.nii` with your input T2-Weighted or T2* scan. This should generate a file that looks like this:
